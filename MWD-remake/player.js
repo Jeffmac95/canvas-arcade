@@ -20,11 +20,12 @@ export default class Player {
         this.movingRight = false;
         this.frame = 0;
         this.frameTimer = 0;
-        this.frameInterval = 100;
+        this.frameInterval = 0.1;
         this.hp = 10;
+        this.maxHp = 10;
         this.hasCollided = false;
         this.hurtTimer = 0;
-        this.hurtFrameDuration = 800;
+        this.hurtFrameDuration = 0.8;
     }
 
     render(ctx, spritesheet) {
@@ -50,7 +51,7 @@ export default class Player {
 
     update(deltaTime) {
         if (this.movingLeft) {
-            this.x -= this.speed * (deltaTime / 1000);
+            this.x -= this.speed * deltaTime;
 
             this.frameTimer += deltaTime;
 
@@ -60,7 +61,7 @@ export default class Player {
             }
         }
         if (this.movingRight) {
-            this.x += this.speed * (deltaTime / 1000);
+            this.x += this.speed * deltaTime;
 
             this.frameTimer += deltaTime;
 

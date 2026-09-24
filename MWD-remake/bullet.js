@@ -24,6 +24,6 @@ export default class Bullet {
     }
 
     update(deltaTime) {
-        this.y -= this.speed * (deltaTime / 1000);
+        this.y -= this.speed * deltaTime;
     }
 }

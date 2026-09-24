@@ -11,7 +11,7 @@ export default class Particle {
 
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
-        this.life = 400 + Math.random() * 400; // 400-800 ms
+        this.life = 0.4 + Math.random() * 0.4;
         this.maxLife = this.life;
 
         this.color = `hsl(${Math.random() * 360}, 100%, 60%)`;
@@ -23,8 +23,8 @@ export default class Particle {
     }
 
     update(deltaTime) {
-        this.x += this.vx * (deltaTime / 1000);
-        this.y += this.vy * (deltaTime / 1000);
+        this.x += this.vx * deltaTime;
+        this.y += this.vy * deltaTime;
         this.life -= deltaTime;
     }
 }
