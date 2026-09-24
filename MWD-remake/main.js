@@ -155,8 +155,9 @@ class Game {
             }
             if (e.code === "Space") {
                 e.preventDefault();
-                this.lazerSound.play();
+                
                 if (this.bullets.length < 10) {
+		    this.lazerSound.play();
                     // have to offset x,y
                     this.bullets.push(new Bullet(this, this.player.x + 20, this.player.y - 16));
                     this.showCooldown = false;
