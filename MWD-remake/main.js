@@ -2,6 +2,7 @@ import Player from "./player.js";
 import Bullet from "./bullet.js";
 import Rock from "./rock.js";
 import Particle from "./particle.js";
+import UI from "./ui.js";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -19,16 +20,14 @@ class Game {
         this.bullets = [];
         this.rocks = [];
         this.particles = [];
-
-        this.lastTime = 0;
+        this.ui = new UI(this);
 
         this.score = 0;
         this.showCooldown = false;
         this.coolDownTimer = 0;
-        this.gameOver = false;
 
         this.rockSpawnTimer = 0;
-        this.rockspawnInterval = 800;
+        this.rockspawnInterval = 0.8;
         this.maxRocks = 12;
 
         this.music = new Audio("./assets/DST-TowerDefenseTheme.mp3");
@@ -36,6 +35,8 @@ class Game {
         this.explosionSound = new Audio("./assets/explosion.wav");
         this.lazerSound.volume = 0.2;
         this.explosionSound.volume = 0.2;
+
+        this.state = "intro";
 
         this.handleInput();
     }
@@ -54,37 +55,23 @@ class Game {
             this.height
         );
 
-        if (this.gameOver) {
-            ctx.font = "48px Georgia";
-            ctx.strokeStyle = "yellow";
-            ctx.textAlign = "center";
-            ctx.strokeText("GAME OVER", this.width / 2, this.height / 2 - 40);
-
-            ctx.font = "28px serif";
-            ctx.strokeStyle = "white";
-            ctx.strokeText(`Final Score: ${this.score}`, this.width / 2, this.height / 2 + 20);
-            ctx.textAlign = "left";
-
-            return;
-        }
-
-        ctx.font = "16px Arial";
-        ctx.strokeStyle = "white";
-        ctx.strokeText(`Score: ${this.score}`, 10, 20);
-        ctx.strokeText(`HP: ${this.player.hp}`, 540, 20);
         if (this.showCooldown) {
-            ctx.strokeStyle = "red";
+            ctx.fillStyle = "#E07A7A";
             ctx.strokeText("Gun on cooldown!", 230, 600);
         }
 
-        this.player.render(ctx, spritesheet);
-        this.bullets.forEach(b => b.render(ctx, spritesheet));
-        this.rocks.forEach(r => r.render(ctx, spritesheet));
-        this.particles.forEach(p => p.render(ctx));
+        if (this.state === "playing") {
+            this.player.render(ctx, spritesheet);
+            this.bullets.forEach(b => b.render(ctx, spritesheet));
+            this.rocks.forEach(r => r.render(ctx, spritesheet));
+            this.particles.forEach(p => p.render(ctx));
+        }
+
+        this.ui.render(ctx);
     }
 
     update(deltaTime) {
-        if (this.gameOver) return;
+        if (this.state !== "playing") return;
 
         if (this.player.x <= 0) this.player.x = 0;
         if (this.player.x > canvas.width - this.player.width) this.player.x = canvas.width - this.player.width;
@@ -132,7 +119,8 @@ class Game {
         }
 
         if (this.player.hp <= 0) {
-            this.gameOver = true;
+            this.state = "game-over";
+            this.music.pause();
         }
 
 
@@ -152,14 +140,17 @@ class Game {
 
     handleInput() {
         addEventListener("keydown", (e) => {
-            if (this.gameOver) return;
+            const key = e.key.toLowerCase();
 
-            this.music.play();
+            if (key === 'p' && this.state === "intro") {
+                this.state = "playing";
+                this.music.play();
+            }
 
-            if (e.key === "a" || e.key === "A") {
+            if (key === 'a') {
                 this.player.movingLeft = true;
             }
-            if (e.key === "d" || e.key === "D") {
+            if (key === 'd') {
                 this.player.movingRight = true;
             }
             if (e.code === "Space") {
@@ -171,13 +162,19 @@ class Game {
                     this.showCooldown = false;
                 } else {
                     this.showCooldown = true;
-                    this.coolDownTimer = 1500;
+                    this.coolDownTimer = 1.5;
                 }
             }
-            if (e.key === "z") {
-                console.log(this.bullets);
-                console.log(this.rocks);
+
+            if (key === 'i' && this.state === "game-over") {
+                this.state = "intro";
+                this.bullets = [];
+                this.rocks = [];
+                this.particles = [];
+                this.score = 0;
+                this.player.hp = this.player.maxHp;
             }
+
         });
 
         addEventListener("keyup", (e) => {
@@ -207,17 +204,21 @@ class Game {
             a.y + a.height > b.y
         );
     }
-
-    animate(timestamp) {
-        const deltaTime = timestamp - this.lastTime;
-        this.lastTime = timestamp;
-
-        this.update(deltaTime);
-        this.render();
-
-        requestAnimationFrame((timestamp) => this.animate(timestamp));
-    }
 }
 
 const game = new Game(canvas);
-spritesheet.onload = () => game.animate(0);
+
+let lastTime = null;
+
+function animate(timestamp) {
+    if (lastTime === null) lastTime = timestamp;
+
+    const deltaTime = (timestamp - lastTime) / 1000;
+    lastTime = timestamp;
+
+    game.update(deltaTime)
+    game.render(ctx);
+
+    requestAnimationFrame(animate);
+}
+spritesheet.onload = () => requestAnimationFrame(animate);
